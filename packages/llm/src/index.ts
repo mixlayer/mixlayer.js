@@ -50,7 +50,7 @@ export class Seq {
   }
 
   async append(text: string, opts?: AppendOptions): Promise<any> {
-    return await _model_seq_append(this.id, text, opts || {});
+    return await _model_seq_append(this, text, opts || {});
   }
 
   async fork(): Promise<Seq> {
@@ -179,11 +179,11 @@ export function assistant(inner: Seq): ProxySeq {
   return new ProxySeq({ role: "assistant" }, { role: "assistant" }, inner);
 }
 
-// These functions are assumed to be defined elsewhere in the codebase
+// platform native functions
 declare function _model_open_seq(opts: OpenOptions): Promise<string | number>;
 declare function _model_seq_gen(seq: Seq, opts: GenOptions): Promise<any>;
 declare function _model_seq_append(
-  seqId: string | number,
+  seqId: Seq,
   text: string,
   opts: AppendOptions
 ): Promise<any>;

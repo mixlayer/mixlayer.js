@@ -1,5 +1,6 @@
 {
   "name": "@mixlayer/llm",
+  "org": "mixlayer",
   "version": "0.0.1",
   "description": "JS LLM runtime for Mixlayer",
   "main": "dist/index.js",
