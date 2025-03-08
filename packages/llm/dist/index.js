@@ -33,7 +33,7 @@ class Seq {
     }
     append(text, opts) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield _model_seq_append(this.id, text, opts || {});
+            return yield _model_seq_append(this, text, opts || {});
         });
     }
     fork() {
