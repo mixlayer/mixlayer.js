@@ -1,5 +1,7 @@
 interface OpenOptions {
   tools?: boolean;
+  systemPrompt?: string;
+  toolPrompt?: string;
 }
 
 interface GenOptions {
@@ -34,8 +36,15 @@ export async function open(opts?: OpenOptions): Promise<Seq> {
   const new_seq_id = await _model_open_seq(open_opts);
   const seq = new Seq(new_seq_id, open_opts);
 
+  if (open_opts.systemPrompt) {
+    await seq.append(open_opts.systemPrompt, { role: "system", hidden: true });
+  }
+
   if (seq.toolsEnabled) {
-    await seq.append(TOOL_PROMPT, { role: "system", hidden: true });
+    await seq.append(open_opts.toolPrompt ?? TOOL_PROMPT, {
+      role: "system",
+      hidden: true,
+    });
   }
 
   return seq;
