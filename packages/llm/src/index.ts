@@ -2,6 +2,7 @@ interface OpenOptions {
   tools?: boolean;
   systemPrompt?: string;
   toolPrompt?: string;
+  skipPrelude?: boolean;
 }
 
 interface GenOptions {
@@ -31,20 +32,31 @@ interface ToolDefinitions {
 const TOOL_PROMPT =
   '# Tool Instructions\nYou may optionally call functions that you have been given access to. You DO NOT have \nto call a function if you do not require it. ONLY call functions if you need them. Do NOT call\nfunctions that you have not been given access to.\n\nIf a you choose to call a function ONLY reply in the following format:\n<{start_tag}={function_name}>{parameters}{end_tag}\nwhere\n\nstart_tag => `<function`\nparameters => a JSON dict with the function argument name as key and function argument value as value.\nend_tag => `</function>`\n\nHere is an example,\n<function=example_function_name>{"example_name": "example_value"}</function>\n\nReminder:\n- Function calls MUST follow the specified format\n- Required parameters MUST be specified\n- You MUST only call functions you have been given access to.\n- Only call one function at a time\n- Put the entire function call reply on one line\n\n';
 
+function preludePrompt(toolsEnabled: boolean) {
+  const today = new Date();
+  const formattedDate = today.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const envPrompt = toolsEnabled ? "Environment: ipython\n" : "";
+  return `${envPrompt}Cutting Knowledge Date: December 2023\nToday Date: ${formattedDate}\n\n`;
+}
+
 export async function open(opts?: OpenOptions): Promise<Seq> {
   const open_opts = opts || {};
   const new_seq_id = await _model_open_seq(open_opts);
   const seq = new Seq(new_seq_id, open_opts);
 
-  if (open_opts.systemPrompt) {
-    await seq.append(open_opts.systemPrompt, { role: "system", hidden: true });
-  }
+  const prelude = !open_opts.skipPrelude ? preludePrompt(seq.toolsEnabled) : "";
+  const toolPrompt = seq.toolsEnabled
+    ? open_opts.toolPrompt ?? TOOL_PROMPT
+    : "";
+  const systemPrompt = prelude + (open_opts.systemPrompt ?? "") + toolPrompt;
 
-  if (seq.toolsEnabled) {
-    await seq.append(open_opts.toolPrompt ?? TOOL_PROMPT, {
-      role: "system",
-      hidden: true,
-    });
+  if (open_opts.systemPrompt && systemPrompt.length > 0) {
+    await seq.append(open_opts.systemPrompt, { role: "system", hidden: true });
   }
 
   return seq;
