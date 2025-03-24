@@ -55,8 +55,8 @@ export async function open(opts?: OpenOptions): Promise<Seq> {
     : "";
   const systemPrompt = prelude + (open_opts.systemPrompt ?? "") + toolPrompt;
 
-  if (open_opts.systemPrompt && systemPrompt.length > 0) {
-    await seq.append(open_opts.systemPrompt, { role: "system", hidden: true });
+  if (systemPrompt.length > 0) {
+    await seq.append(systemPrompt, { role: "system", hidden: true });
   }
 
   return seq;
