@@ -30,7 +30,7 @@ interface ToolDefinitions {
 // TODO: this tool prompt will vary based on the model, so should be
 // passed in as part of an initialiation step
 const TOOL_PROMPT =
-  '# Tool Instructions\nYou may optionally call functions that you have been given access to. You DO NOT have \nto call a function if you do not require it. ONLY call functions if you need them. Do NOT call\nfunctions that you have not been given access to.\n\nIf a you choose to call a function ONLY reply in the following format:\n<{start_tag}={function_name}>{parameters}{end_tag}\nwhere\n\nstart_tag => `<function`\nparameters => a JSON dict with the function argument name as key and function argument value as value.\nend_tag => `</function>`\n\nHere is an example,\n<function=example_function_name>{"example_name": "example_value"}</function>\n\nReminder:\n- Function calls MUST follow the specified format\n- Required parameters MUST be specified\n- You MUST only call functions you have been given access to.\n- Only call one function at a time\n- Put the entire function call reply on one line\n\n';
+  '\n# Tool Instructions\nYou may optionally call functions that you have been given access to. You DO NOT have \nto call a function if you do not require it. ONLY call functions if you need them. Do NOT call\nfunctions that you have not been given access to.\n\nIf a you choose to call a function ONLY reply in the following format:\n<{start_tag}={function_name}>{parameters}{end_tag}\nwhere\n\nstart_tag => `<function`\nparameters => a JSON dict with the function argument name as key and function argument value as value.\nend_tag => `</function>`\n\nHere is an example,\n<function=example_function_name>{"example_name": "example_value"}</function>\n\nReminder:\n- Function calls MUST follow the specified format\n- Required parameters MUST be specified\n- You MUST only call functions you have been given access to.\n- Only call one function at a time\n- Put the entire function call reply on one line\n\n';
 
 function preludePrompt(toolsEnabled: boolean) {
   const today = new Date();
@@ -53,7 +53,7 @@ export async function open(opts?: OpenOptions): Promise<Seq> {
   const toolPrompt = seq.toolsEnabled
     ? open_opts.toolPrompt ?? TOOL_PROMPT
     : "";
-  const systemPrompt = prelude + (open_opts.systemPrompt ?? "") + toolPrompt;
+  const systemPrompt = prelude + toolPrompt + (open_opts.systemPrompt ?? "");
 
   if (systemPrompt.length > 0) {
     await seq.append(systemPrompt, { role: "system", hidden: true });
