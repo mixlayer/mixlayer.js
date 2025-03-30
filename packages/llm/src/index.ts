@@ -164,7 +164,7 @@ export class Seq {
   }
 
   async close(): Promise<void> {
-    throw new Error("not implemented");
+    return await _model_seq_close(this);
   }
 }
 
@@ -201,6 +201,10 @@ export class ProxySeq {
       ...opts,
     });
   }
+
+  async close(): Promise<void> {
+    return await this.inner.close();
+  }
 }
 
 export function user(inner: Seq): ProxySeq {
@@ -220,3 +224,4 @@ declare function _model_seq_append(
   opts: AppendOptions
 ): Promise<any>;
 declare function _model_seq_fork(seq: Seq): Promise<string | number>;
+declare function _model_seq_close(seq: Seq): Promise<void>;
