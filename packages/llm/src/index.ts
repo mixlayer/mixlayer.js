@@ -81,8 +81,11 @@ export class Seq {
     return await _model_seq_gen(this, opts || {});
   }
 
-  async append(text: string, opts?: AppendOptions): Promise<any> {
-    return await _model_seq_append(this, text, opts || {});
+  async append(
+    textOrTokens: number[] | string,
+    opts?: AppendOptions
+  ): Promise<any> {
+    return await _model_seq_append(this, textOrTokens, opts || {});
   }
 
   async fork(): Promise<Seq> {
@@ -220,7 +223,7 @@ declare function _model_open_seq(opts: OpenOptions): Promise<string | number>;
 declare function _model_seq_gen(seq: Seq, opts: GenOptions): Promise<any>;
 declare function _model_seq_append(
   seqId: Seq,
-  text: string,
+  textOrTokens: number[] | string,
   opts: AppendOptions
 ): Promise<any>;
 declare function _model_seq_fork(seq: Seq): Promise<string | number>;
