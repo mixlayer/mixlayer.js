@@ -83,6 +83,7 @@ class GenStream {
 
   async textStream(): Promise<ReadableStream<string>> {
     const stream = await this.stream();
+
     const xform = new TransformStream<GenChunk, string>({
       start() {},
       async transform(chunk, controller) {
@@ -91,6 +92,8 @@ class GenStream {
         }
       },
     });
+
+    stream.pipeTo(xform.writable);
 
     return xform.readable;
   }
