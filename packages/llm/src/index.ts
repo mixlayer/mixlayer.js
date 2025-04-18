@@ -81,6 +81,20 @@ class GenStream {
     return this.streamPromise;
   }
 
+  async textStream(): Promise<ReadableStream<string>> {
+    const stream = await this.stream();
+    const xform = new TransformStream<GenChunk, string>({
+      start() {},
+      async transform(chunk, controller) {
+        if (!chunk.hidden) {
+          controller.enqueue(chunk.text);
+        }
+      },
+    });
+
+    return xform.readable;
+  }
+
   /**
    * Reads the entire stream and returns the full text content.
    */
