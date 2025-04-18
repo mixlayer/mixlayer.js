@@ -62,6 +62,49 @@ export async function open(opts?: OpenOptions): Promise<Seq> {
   return seq;
 }
 
+interface GenChunk {
+  text: string;
+  hidden: boolean;
+}
+
+class GenStream {
+  private streamPromise: Promise<ReadableStream<GenChunk>>;
+
+  constructor(streamPromise: Promise<ReadableStream<GenChunk>>) {
+    this.streamPromise = streamPromise;
+  }
+
+  /**
+   * Returns the underlying ReadableStream.
+   */
+  async stream(): Promise<ReadableStream<GenChunk>> {
+    return this.streamPromise;
+  }
+
+  /**
+   * Reads the entire stream and returns the full text content.
+   */
+  async text(): Promise<string> {
+    const stream = await this.streamPromise;
+    const reader = stream.getReader();
+
+    let result = "";
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        break;
+      }
+
+      if (!value.hidden) {
+        result += value.text;
+      }
+    }
+
+    return result;
+  }
+}
+
 export class Seq {
   readonly id: string | number;
   readonly toolsEnabled: boolean;
@@ -77,8 +120,9 @@ export class Seq {
     this.tools = toolDefs || {};
   }
 
-  async gen(opts?: GenOptions): Promise<any> {
-    return await _model_seq_gen(this, opts || {});
+  gen(opts?: GenOptions): GenStream {
+    const streamPromise = _model_seq_gen_stream(this, opts || {});
+    return new GenStream(streamPromise);
   }
 
   async append(
@@ -88,9 +132,21 @@ export class Seq {
     return await _model_seq_append(this, textOrTokens, opts || {});
   }
 
-  async fork(): Promise<Seq> {
+  async fork<T>(f: (seq: Seq) => Promise<T>): Promise<T> {
     let new_seq_id = await _model_seq_fork(this);
-    return new Seq(new_seq_id, { tools: this.toolsEnabled }, this.tools);
+
+    let forked_seq = new Seq(
+      new_seq_id,
+      { tools: this.toolsEnabled },
+      this.tools
+    );
+
+    try {
+      let result = await f(forked_seq);
+      return result;
+    } finally {
+      await forked_seq.close();
+    }
   }
 
   async invokeTool(name: string, params: any): Promise<any> {
@@ -191,8 +247,8 @@ export class ProxySeq {
     this.inner = inner;
   }
 
-  async gen(opts?: GenOptions): Promise<any> {
-    return await this.inner.gen({
+  gen(opts?: GenOptions): GenStream {
+    return this.inner.gen({
       ...this.genOverrides,
       ...opts,
     });
@@ -228,3 +284,7 @@ declare function _model_seq_append(
 ): Promise<any>;
 declare function _model_seq_fork(seq: Seq): Promise<string | number>;
 declare function _model_seq_close(seq: Seq): Promise<void>;
+declare function _model_seq_gen_stream(
+  seq: Seq,
+  opts: GenOptions
+): Promise<ReadableStream>;
